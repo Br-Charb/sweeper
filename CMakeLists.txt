@@ -17,6 +17,8 @@ add_executable(main main.cpp
         welcomeWindow.h
         gameWindow.cpp
         gameWindow.h
+        tile.cpp
+        tile.h
 )
 target_compile_features(main PRIVATE cxx_std_17)
 target_link_libraries(main PRIVATE SFML::Graphics)

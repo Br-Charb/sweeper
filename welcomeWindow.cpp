@@ -73,7 +73,7 @@ void welcomeWindow::openWindow() {
                     if (!(name.empty())) {
                         name.pop_back();
                         name_input.setString(name + "|");                    }
-                } else if (std::isalpha(c) && name.length() < 11) {
+                } else if (std::isalpha(c) && name.length() < 10) {
                     if (!(name.empty())) {
                         name += std::tolower(c);
                     } else {
