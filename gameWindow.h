@@ -23,6 +23,7 @@ private:
     unsigned int game_h;
     unsigned int game_m;
     bool game_over;
+    bool gameGoing;
 };
 
 

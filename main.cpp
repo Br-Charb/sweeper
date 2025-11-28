@@ -11,10 +11,10 @@ int main() {
     unsigned int rows; unsigned int cols; unsigned int mines;
     file >> rows >> cols >> mines;
     welcomeWindow w(rows, cols);
-    w.openWindow();
+    // w.openWindow();
 
-    if (w.getClosed()) {
-    // if (1){
+    // if (w.getClosed()) {
+    if (1){
         gameWindow game(rows, cols, mines);
         game.openGame();
     }

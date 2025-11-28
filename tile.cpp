@@ -30,7 +30,7 @@ sf::Sprite& tile::getFlag() {
 
 
 void tile::becomeFlag() {
-    flagged = true;
+    flagged = !flagged;
 }
 
 int tile::getNumber() {
