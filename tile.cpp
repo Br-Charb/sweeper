@@ -16,6 +16,15 @@ tile::tile(std::map<std::string, sf::Texture*> tex, int n) : sprt(sf::Sprite(*te
     textures = tex;
 }
 
+void tile::setNumber(int n) {
+    number = n;
+    if (n == -1) {
+        mine = true;
+    } else {
+        mine = false;
+    }
+}
+
 bool tile::getFlagged() {
     return flagged;
 }
@@ -47,7 +56,7 @@ bool tile::getClicked() {
 
 void tile::reveal() {
     sprt.setTexture(*textures["0"]);
-    flagged = true;
+    // flagged = true;
     clicked = true;
     if (mine) {
         flag.setTexture(*textures["mine"]);
@@ -55,4 +64,11 @@ void tile::reveal() {
     else {
         flag.setTexture(*textures[std::to_string(number)]);
     }
+}
+
+void tile::unreveal() {
+    // flagged = false;
+    clicked = false;
+    sprt.setTexture(*textures["tile_hidden"]);
+    flag.setTexture(*textures["flag"]);
 }

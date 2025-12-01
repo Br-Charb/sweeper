@@ -5,6 +5,9 @@
 #include "gameWindow.h"
 #include <map>
 
+
+
+//constructor
 gameWindow::gameWindow(unsigned int w, unsigned int h, unsigned int m) {
     game_rows = h;
     game_cols = w;
@@ -13,12 +16,17 @@ gameWindow::gameWindow(unsigned int w, unsigned int h, unsigned int m) {
     game_m = m;
     game_over = false;
     gameGoing = true;
+    paused = false;
+    revealed_count = 0;
+    game_win = false;
 }
 
+//bounds checking function
 bool gameWindow::checkBounds(int row, int col) {
     return (0 <= col && col < game_cols && 0 <= row && row < game_rows);
 }
 
+//finds number for tile
 int gameWindow::checkAround(std::vector<std::vector<int>> grid, int row, int col) {
     int minesCount = 0;
     for (int x = -1; x < 2; x++) {
@@ -33,45 +41,51 @@ int gameWindow::checkAround(std::vector<std::vector<int>> grid, int row, int col
     return minesCount;
 }
 
-std::vector<std::vector<int>> gameWindow::boardLayout() {
-    std::vector<std::vector<int>> board(game_rows, std::vector<int>(game_cols, 0));
-    std::vector<int> bombLocations;
-    srand(static_cast<unsigned int>(time(NULL)));
+// generates board
+ std::vector<std::vector<int>> gameWindow::boardLayout(int r, int c) {
+     std::vector<std::vector<int>> board(game_rows, std::vector<int>(game_cols, 0));
+     std::vector<int> nearTiles;
+     for (int x = -1; x < 2; x++) {
+         for (int y = -1; y < 2; y++) {
+             if (checkBounds(r + x, c + y)) {
+                 nearTiles.push_back((r+x)*game_cols + c+y);
+             }
+         }
+     }
 
-    while (bombLocations.size() < game_m) {
-        int rNum = (rand() % ((game_rows * game_cols)));
-        bool duplicate = false;
-        for (int i = 0; i < bombLocations.size(); i++) {
-            if (bombLocations[i] == rNum) {
-                duplicate = true;
-            }
-        }
-        if (!duplicate) {
-            bombLocations.push_back(rNum);
-            board[rNum/game_cols][rNum % game_cols] = -1; //maybe issue
-        }
-    }
+     std::vector<int> possibleBombLocations;
+     for (int index = 0; index < game_rows*game_cols; index++) {
+         if (std::find(nearTiles.begin(), nearTiles.end(), index) == nearTiles.end()) {
+             possibleBombLocations.push_back(index);
+         }
+     }
+     srand(static_cast<unsigned int>(time(NULL)));
+     for (int i = 0; i < game_m; i++){
+         int rNum = rand() % possibleBombLocations.size();
+         board[possibleBombLocations[rNum]/game_cols][possibleBombLocations[rNum] % game_cols] = -1;
+         possibleBombLocations.erase(possibleBombLocations.begin() + rNum);
+     }
 
 
-    for (int row = 0; row < game_rows; row++) {
-        for (int col = 0; col < game_cols; col++) {
-            if (board[row][col] != -1) {
-                board[row][col] = checkAround(board, row, col);
-            }
-        }
-    }
+     for (int row = 0; row < game_rows; row++) {
+         for (int col = 0; col < game_cols; col++) {
+             if (board[row][col] != -1) {
+                 board[row][col] = checkAround(board, row, col);
+             }
+         }
+     }
 
-    return board;
+     return board;
+ }
 
-}
-
+//reveals tiles around clicked tile
 void gameWindow::revealAround(std::vector<std::vector<tile>> &tiles, int row, int col) {
     for (int x = -1; x < 2; x++) {
         for (int y = -1; y < 2; y++) {
             if (checkBounds(row + x, col + y)) {
-                if (tiles[row + x][col + y].getNumber() != -1 && !tiles[row + x][col + y].getClicked()) {
-                    std::cout << row + x << " " << col + y << std::endl;
+                if (tiles[row + x][col + y].getNumber() != -1 && !tiles[row + x][col + y].getClicked() && !tiles[row + x][col + y].getFlagged()) {
                     tiles[row + x][col + y].reveal();
+                    revealed_count += 1;
                     if (tiles[row+x][col+y].getNumber() == 0) {
                         revealAround(tiles, row + x, col + y);
                     }
@@ -81,17 +95,24 @@ void gameWindow::revealAround(std::vector<std::vector<tile>> &tiles, int row, in
     }
 }
 
+//returns time digits
+std::vector<int> getDigits(int numbers) {
+    int minutesTens = numbers/600;
+    numbers -= minutesTens*600;
+    int minutesSingles = numbers/60;
+    numbers -= minutesSingles*60;
+    int secondsTens = numbers/10;
+    numbers -= secondsTens*10;
+    int secondsSingles = numbers;
+    return {minutesTens, minutesSingles, secondsTens, secondsSingles};
+}
+
 void gameWindow::openGame() {
 
     //create window
     sf::RenderWindow window(sf::VideoMode({game_w, game_h}), "Minesweeper", sf::Style::Close);
-    while (gameGoing) {
-        game_over = false;
 
-        //Generate board with mines
-        std::vector<std::vector<int>> board = gameWindow::boardLayout();
-
-        //load textures into map
+    //load all textures
         sf::Texture tile_hidden("files/images/tile_hidden.png", false, sf::IntRect({0, 0}, {32, 32}));
         sf::Texture tile_revealed("files/images/tile_revealed.png", false, sf::IntRect({0, 0}, {32, 32}));
         sf::Texture flag("files/images/flag.png", false, sf::IntRect({0, 0}, {32, 32}));
@@ -104,37 +125,17 @@ void gameWindow::openGame() {
         sf::Texture six("files/images/number_6.png", false, sf::IntRect({0, 0}, {32, 32}));
         sf::Texture seven("files/images/number_7.png", false, sf::IntRect({0, 0}, {32, 32}));
         sf::Texture eight("files/images/number_8.png", false, sf::IntRect({0, 0}, {32, 32}));
-
-        std::map<std::string, sf::Texture*> textures;
-
-        //render buttons
-        //happy button
         sf::Texture happyFace("files/images/face_happy.png", false, sf::IntRect({0, 0}, {64, 64}));
-        sf::Sprite happyFaceButton(happyFace);
-        happyFaceButton.setPosition({((game_cols/2.0f)*32)-32, 32*(game_rows+0.5f)});
-
-        //debug button
+        sf::Texture winFace("files/images/face_win.png", false, sf::IntRect({0, 0}, {64, 64}));
+        sf::Texture loseFace("files/images/face_lose.png", false, sf::IntRect({0, 0}, {64, 64}));
         sf::Texture debug("files/images/debug.png", false, sf::IntRect({0, 0}, {64, 64}));
-        sf::Sprite debugButton(debug);
-        debugButton.setPosition({(game_cols*32.0f)-304, 32*(game_rows+0.5f)});
-
-        //pause/play button
         sf::Texture pause("files/images/pause.png", false, sf::IntRect({0, 0}, {64, 64}));
         sf::Texture play("files/images/play.png", false, sf::IntRect({0, 0}, {64, 64}));
-        sf::Sprite pausePlay(pause);
-        pausePlay.setPosition({(game_cols*32.0f)-240, 32*(game_rows+0.5f)});
-
-
-        //leaderboard button
         sf::Texture leadBoardTexture("files/images/leaderboard.png", false, sf::IntRect({0, 0}, {64, 64}));
-        sf::Sprite leaderBoardSprite(leadBoardTexture);
-        leaderBoardSprite.setPosition({(game_cols*32.0f)-176, 32*(game_rows+0.5f)});
+        sf::Texture digits("files/images/digits.png", false, sf::IntRect({0, 0}, {231, 32}));
 
-
-
-        //counter
-
-
+        //load textures for tile
+        std::map<std::string, sf::Texture*> textures;
         textures["tile_hidden"] = &tile_hidden;
         textures["flag"] = &flag;
         textures["mine"] = &mine;
@@ -148,18 +149,81 @@ void gameWindow::openGame() {
         textures["7"] = &seven;
         textures["8"] = &eight;
 
+    //allows for the game to be restarted
+    while (gameGoing) {
+
+        //initalizes variables
+        game_over = false;
+        int flag_count = 0;
+        int pause_time = 0;
+        long long time;
+        paused = false;
+
+        std::chrono::time_point<std::chrono::steady_clock> pausedTime;
+
+
+        //gets time
+        std::chrono::time_point<std::chrono::steady_clock> start;
+
+        //buttons
+        //restart button
+        sf::Sprite restartButton(happyFace);
+        restartButton.setPosition({((game_cols/2.0f)*32)-32, 32*(game_rows+0.5f)});
+
+        //debug button
+        sf::Sprite debugButton(debug);
+        debugButton.setPosition({(game_cols*32.0f)-304, 32*(game_rows+0.5f)});
+
+        //pause/play button
+        sf::Sprite pausePlay(pause);
+        pausePlay.setPosition({(game_cols*32.0f)-240, 32*(game_rows+0.5f)});
+
+        //leaderboard button
+        sf::Sprite leaderBoardSprite(leadBoardTexture);
+        leaderBoardSprite.setPosition({(game_cols*32.0f)-176, 32*(game_rows+0.5f)});
+
+        //timer buttons
+        sf::Sprite t1(digits);
+        t1.setPosition({game_cols*32.0f-97, 32*(game_rows+0.5f)+16});
+        t1.setTextureRect(sf::IntRect({0, 0}, {21, 32}));
+        sf::Sprite t2(digits);
+        t2.setPosition({game_cols*32.0f-76, 32*(game_rows+0.5f)+16});
+        t2.setTextureRect(sf::IntRect({0, 0}, {21, 32}));
+        sf::Sprite t3(digits);
+        t3.setPosition({game_cols*32.0f-54, 32*(game_rows+0.5f)+16});
+        t3.setTextureRect(sf::IntRect({0, 0}, {21, 32}));
+        sf::Sprite t4(digits);
+        t4.setPosition({game_cols*32.0f-33, 32*(game_rows+0.5f)+16});
+        t4.setTextureRect(sf::IntRect({0, 0}, {21, 32}));
+
+        //mine counter
+        sf::Sprite c1(digits);
+        c1.setPosition({33.0f, 32*(game_rows+0.5f)+16});
+        sf::Sprite c2(digits);
+        c2.setPosition({54, 32*(game_rows+0.5f)+16});
+        sf::Sprite c3(digits);
+        c3.setPosition({75, 32*(game_rows+0.5f)+16});
+
+        int tempMines = game_m;
+        c1.setTextureRect(sf::IntRect({(tempMines/100)*21, 0}, {21, 32}));
+        tempMines -= (tempMines/100)*100;
+        c2.setTextureRect(sf::IntRect({(tempMines/10)*21, 0}, {21, 32}));
+        tempMines -= (tempMines/10)*10;
+        c3.setTextureRect(sf::IntRect({tempMines*21, 0}, {21, 32}));
+
         //generate grid
         std::vector<std::vector<tile>> tiles;
         for (int row = 0; row < game_rows; row++) {
             std::vector<tile> sprite_row;
             for (int col = 0; col < game_cols; col++) {
-                tile t(textures, board[row][col]);
+                tile t(textures, 0);
                 t.getTile().setPosition({col*32.0f, row*32.0f});
                 t.getFlag().setPosition({col*32.0f, row*32.0f});
                 sprite_row.push_back(t);
             }
             tiles.push_back(sprite_row);
         }
+
         bool resetBoard = true;
         //run window
         while(window.isOpen() && resetBoard) {
@@ -168,32 +232,100 @@ void gameWindow::openGame() {
                     gameGoing = false;
                     resetBoard = false;
                 }
-                if (!game_over) {
-                    if (const auto* mousePressed = event->getIf<sf::Event::MouseButtonPressed>()) {
-                        if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
-                            auto mousePos = sf::Mouse::getPosition(window);
-                            for (int row = 0; row < game_rows; row += 1) {
-                                for (int col = 0; col < game_cols; col += 1) {
-                                    if (tiles[row][col].getTile().getGlobalBounds().contains(sf::Vector2f(mousePos))) {
-                                        tiles[row][col].becomeFlag();
+                if (const auto* mousePressed = event->getIf<sf::Event::MouseButtonPressed>()) {
+                    if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+                        auto mousePos = sf::Mouse::getPosition(window);
+
+                        if (restartButton.getGlobalBounds().contains(sf::Vector2f(mousePos))){
+                            resetBoard = false;
+                            game_over = false;
+                            revealed_count = 0;
+                        }
+
+                        for (int r = 0; r < game_rows; r += 1) {
+                            for (int c = 0; c < game_cols; c += 1) {
+                                if (tiles[r][c].getTile().getGlobalBounds().contains(sf::Vector2f(mousePos)) && revealed_count == 0 && !tiles[r][c].getFlagged()) {
+                                    start = std::chrono::high_resolution_clock::now();
+                                    //generate game with first click in mind
+                                    std::vector<std::vector<int>> board = gameWindow::boardLayout(r, c);
+                                    for (int row = 0; row < game_rows; row++) {
+                                        for (int col = 0; col < game_cols; col++) {
+                                            tiles[row][col].setNumber(board[row][col]);
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
 
+                    }
+                }
+                if (revealed_count > 0) {
                     if (const auto* mousePressed = event->getIf<sf::Event::MouseButtonPressed>()) {
+                        auto mousePos = sf::Mouse::getPosition(window);
                         if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
-                            auto mousePos = sf::Mouse::getPosition(window);
+                            if (pausePlay.getGlobalBounds().contains(sf::Vector2f(mousePos))) {
+                                paused = !paused;
+                                if (paused) {
+                                    pausePlay.setTexture(play);
+                                    pausedTime = std::chrono::high_resolution_clock::now();
+                                }
+                                else {
+                                    pausePlay.setTexture(pause);
+                                    pause_time += std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - pausedTime).count();
+                                }
+                            }
+                        }
+                    }
+                }
+                if (!game_over && !paused) {
+                    if (const auto* mousePressed = event->getIf<sf::Event::MouseButtonPressed>()) {
+                        auto mousePos = sf::Mouse::getPosition(window);
+                        if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
                             for (int row = 0; row < game_rows; row += 1) {
                                 for (int col = 0; col < game_cols; col += 1) {
-                                    if (tiles[row][col].getTile().getGlobalBounds().contains(sf::Vector2f(mousePos))) {
-                                        tiles[row][col].reveal();
-                                        if (tiles[row][col].getNumber() == 0) {
-                                            revealAround(tiles, row, col);
+                                    if (tiles[row][col].getTile().getGlobalBounds().contains(sf::Vector2f(mousePos)) && tiles[row][col].getClicked() == false) {
+                                        tiles[row][col].becomeFlag();
+                                        if (tiles[row][col].getFlagged()) {flag_count += 1;}
+                                        else{flag_count -= 1;}
+                                        int minesLeft = game_m-flag_count;
+                                        std::cout << minesLeft << std::endl;
+                                        c1.setTextureRect(sf::IntRect({(minesLeft/100)*21, 0}, {21, 32}));
+                                        minesLeft -= (minesLeft/100)*100;
+                                        c2.setTextureRect(sf::IntRect({(minesLeft/10)*21, 0}, {21, 32}));
+                                        minesLeft -= (minesLeft/10)*10;
+                                        c3.setTextureRect(sf::IntRect({minesLeft*21, 0}, {21, 32}));
+                                    }
+                                }
+                            }
+                        }
+                        if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+                            if (debugButton.getGlobalBounds().contains(sf::Vector2f(mousePos))){
+                                for (int row = 0; row < game_rows; row += 1) {
+                                    for (int col = 0; col < game_cols; col += 1) {
+                                        if (tiles[row][col].getNumber() == -1) {
+                                            if (tiles[row][col].getClicked()) {
+                                                tiles[row][col].unreveal();
+                                            } else {
+                                                tiles[row][col].reveal();
+                                            }
                                         }
-                                        else if (tiles[row][col].getNumber() == -1) {
-                                            game_over = true;
+                                    }
+                                }
+                            }
+                            else {
+                                for (int row = 0; row < game_rows; row += 1) {
+                                    for (int col = 0; col < game_cols; col += 1) {
+                                        if (tiles[row][col].getTile().getGlobalBounds().contains(sf::Vector2f(mousePos)) && tiles[row][col].getFlagged() == false) {
+                                            tiles[row][col].reveal();
+                                            revealed_count += 1;
+                                            if (tiles[row][col].getNumber() == 0) {
+                                                revealAround(tiles, row, col);
+                                            }
+                                            else if (tiles[row][col].getNumber() == -1) {
+                                                revealed_count -= 1;
+                                                game_over = true;
+                                                restartButton.setTexture(loseFace);
+                                            }
                                         }
                                     }
                                 }
@@ -204,10 +336,37 @@ void gameWindow::openGame() {
             }
 
             window.clear(sf::Color::White);
-            window.draw(happyFaceButton);
+            window.draw(restartButton);
             window.draw(debugButton);
             window.draw(pausePlay);
             window.draw(leaderBoardSprite);
+
+            // std::cout << flag_count << std::endl;
+
+            if (revealed_count != 0 && !game_over) {
+                if (paused) {
+                    time = std::chrono::duration_cast<std::chrono::seconds>(pausedTime - start).count() - pause_time;
+                } else {
+                    time = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - start).count() - pause_time;
+                }
+                if (time > 5999) {
+                    t1.setTextureRect(sf::IntRect({21*9, 0}, {21, 32}));
+                    t2.setTextureRect(sf::IntRect({21*9, 0}, {21, 32}));
+                    t3.setTextureRect(sf::IntRect({21*5, 0}, {21, 32}));
+                    t4.setTextureRect(sf::IntRect({21*9, 0}, {21, 32}));
+                } else {
+                    std::vector<int> digits = getDigits(time);
+                    t1.setTextureRect(sf::IntRect({21*digits[0], 0}, {21, 32}));
+                    t2.setTextureRect(sf::IntRect({21*digits[1], 0}, {21, 32}));
+                    t3.setTextureRect(sf::IntRect({21*digits[2], 0}, {21, 32}));
+                    t4.setTextureRect(sf::IntRect({21*digits[3], 0}, {21, 32}));
+                }
+            }
+
+            window.draw(t1);
+            window.draw(t2);
+            window.draw(t3);
+            window.draw(t4);
 
             for (int row = 0; row < game_rows; row += 1) {
                 for (int col = 0; col < game_cols; col += 1) {
@@ -215,9 +374,34 @@ void gameWindow::openGame() {
                     if (game_over && tiles[row][col].getNumber() == -1) {
                         tiles[row][col].reveal();
                     }
-                    if (tiles[row][col].getFlagged()) {window.draw(tiles[row][col].getFlag());}
+                    if (tiles[row][col].getFlagged() || tiles[row][col].getClicked()) {window.draw(tiles[row][col].getFlag());}
                 }
             }
+
+            if (revealed_count == (game_cols*game_rows-game_m)) {
+                game_over = true;
+                game_win = true;
+
+                c1.setTextureRect(sf::IntRect({0, 0}, {21, 32}));
+                c2.setTextureRect(sf::IntRect({0, 0}, {21, 32}));
+                c3.setTextureRect(sf::IntRect({0, 0}, {21, 32}));
+
+                for (int row = 0; row < game_rows; row += 1) {
+                    for (int col = 0; col < game_cols; col += 1) {
+                        if (game_over && tiles[row][col].getNumber() == -1) {
+                            tiles[row][col].unreveal();
+                            window.draw(tiles[row][col].getTile());
+                        }
+                        if (!tiles[row][col].getClicked()) {window.draw(tiles[row][col].getFlag());}
+                        restartButton.setTexture(winFace);
+                    }
+                }
+            }
+
+            window.draw(c1);
+            window.draw(c2);
+            window.draw(c3);
+
             window.display();
         }
     }

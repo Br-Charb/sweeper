@@ -12,6 +12,7 @@
 class tile {
 public:
     tile(std::map<std::string, sf::Texture*> tex, int n);
+    void setNumber(int n);
     bool getFlagged();
     sf::Sprite& getTile();
     sf::Sprite& getFlag();
@@ -20,6 +21,7 @@ public:
     bool getClicked();
     void becomeFlag();
     void reveal();
+    void unreveal();
 
 private:
     int number;
@@ -29,6 +31,7 @@ private:
     sf::Sprite sprt;
     sf::Sprite flag;
     std::map<std::string, sf::Texture*> textures;
+    bool interactable;
 };
 
 

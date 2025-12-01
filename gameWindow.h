@@ -13,7 +13,7 @@ public:
     gameWindow(unsigned int w, unsigned int h, unsigned int m);
     bool checkBounds(int col, int row);
     int checkAround(std::vector<std::vector<int>> grid, int col, int row);
-    std::vector<std::vector<int>> boardLayout();
+    std::vector<std::vector<int>> boardLayout(int r, int c);
     void revealAround(std::vector<std::vector<tile>> &tiles, int col, int row);
     void openGame();
 private:
@@ -24,6 +24,11 @@ private:
     unsigned int game_m;
     bool game_over;
     bool gameGoing;
+    bool paused;
+    int revealed_count;
+    bool first_click;
+    bool game_win;
+    bool started;
 };
 
 
