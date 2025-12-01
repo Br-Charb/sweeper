@@ -8,6 +8,7 @@
 #include <iostream>
 #include "tile.h"
 #include "leaderBoard.h"
+#include <cstdlib>
 
 class gameWindow {
 public:
@@ -22,7 +23,7 @@ private:
     unsigned int game_cols;
     unsigned int game_w;
     unsigned int game_h;
-    unsigned int game_m;
+    int game_m;
     bool game_over;
     bool gameGoing;
     bool paused;

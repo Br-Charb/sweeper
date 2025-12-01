@@ -14,7 +14,6 @@ int main() {
     w.openWindow();
 
     if (w.getClosed()) {
-    // if (1){
         gameWindow game(rows, cols, mines, w.getName());
         game.openGame();
     }

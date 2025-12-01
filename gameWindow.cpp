@@ -208,6 +208,10 @@ void gameWindow::openGame() {
         c2.setPosition({54, 32*(game_rows+0.5f)+16});
         sf::Sprite c3(digits);
         c3.setPosition({75, 32*(game_rows+0.5f)+16});
+        sf::Sprite cn(digits);
+        cn.setPosition({12, 32*(game_rows+0.5f)+16});
+        cn.setTextureRect(sf::IntRect({210, 0}, {21, 32}));
+
 
         int tempMines = game_m;
         c1.setTextureRect(sf::IntRect({(tempMines/100)*21, 0}, {21, 32}));
@@ -270,7 +274,7 @@ void gameWindow::openGame() {
 
                     }
                 }
-                if (revealed_count != (game_cols*game_rows-game_m) && revealed_count > 0) {
+                if (!game_over && revealed_count > 0) {
                     if (const auto* mousePressed = event->getIf<sf::Event::MouseButtonPressed>()) {
                         auto mousePos = sf::Mouse::getPosition(window);
                         if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
@@ -298,7 +302,7 @@ void gameWindow::openGame() {
                                         tiles[row][col].becomeFlag();
                                         if (tiles[row][col].getFlagged()) {flag_count += 1;}
                                         else{flag_count -= 1;}
-                                        int minesLeft = game_m-flag_count;
+                                        int minesLeft = std::abs(game_m-flag_count +0.0f);
                                         std::cout << minesLeft << std::endl;
                                         c1.setTextureRect(sf::IntRect({(minesLeft/100)*21, 0}, {21, 32}));
                                         minesLeft -= (minesLeft/100)*100;
@@ -310,7 +314,7 @@ void gameWindow::openGame() {
                             }
                         }
                         if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
-                            if (debugButton.getGlobalBounds().contains(sf::Vector2f(mousePos))){
+                            if (debugButton.getGlobalBounds().contains(sf::Vector2f(mousePos)) && !game_over){
                                 for (int row = 0; row < game_rows; row += 1) {
                                     for (int col = 0; col < game_cols; col += 1) {
                                         if (tiles[row][col].getNumber() == -1) {
@@ -347,24 +351,6 @@ void gameWindow::openGame() {
             }
 
             window.clear(sf::Color::White);
-            if (revealed_count == (game_cols*game_rows-game_m) && justWon) {
-                game_over = true;
-                game_win = true;
-
-                c1.setTextureRect(sf::IntRect({0, 0}, {21, 32}));
-                c2.setTextureRect(sf::IntRect({0, 0}, {21, 32}));
-                c3.setTextureRect(sf::IntRect({0, 0}, {21, 32}));
-
-                for (int row = 0; row < game_rows; row += 1) {
-                    for (int col = 0; col < game_cols; col += 1) {
-                        if (tiles[row][col].getNumber() == -1) {
-                            tiles[row][col].unreveal();
-                            tiles[row][col].becomeFlag();
-                        }
-                    }
-                }
-                restartButton.setTexture(winFace);
-            }
 
             window.draw(restartButton);
             window.draw(debugButton);
@@ -397,6 +383,25 @@ void gameWindow::openGame() {
             window.draw(t3);
             window.draw(t4);
 
+            if (revealed_count == (game_cols*game_rows-game_m) && justWon) {
+                game_over = true;
+                game_win = true;
+
+                c1.setTextureRect(sf::IntRect({0, 0}, {21, 32}));
+                c2.setTextureRect(sf::IntRect({0, 0}, {21, 32}));
+                c3.setTextureRect(sf::IntRect({0, 0}, {21, 32}));
+
+                for (int row = 0; row < game_rows; row += 1) {
+                    for (int col = 0; col < game_cols; col += 1) {
+                        if (tiles[row][col].getNumber() == -1) {
+                            tiles[row][col].unreveal();
+                            tiles[row][col].becomeFlag();
+                        }
+                    }
+                }
+                restartButton.setTexture(winFace);
+            }
+
             for (int row = 0; row < game_rows; row += 1) {
                 for (int col = 0; col < game_cols; col += 1) {
                     window.draw(tiles[row][col].getTile());
@@ -410,6 +415,17 @@ void gameWindow::openGame() {
             window.draw(c1);
             window.draw(c2);
             window.draw(c3);
+            if (((int) game_m)-flag_count < 0) window.draw(cn);
+
+            if (paused) {
+                for (int row = 0; row < game_rows; row++) {
+                    for (int col = 0; col < game_cols; col++) {
+                        sf::Sprite tempTile(*textures["0"]);
+                        tempTile.setPosition({col*32.0f, row*32.0f});
+                        window.draw(tempTile);
+                    }
+                }
+            }
 
             window.display();
 

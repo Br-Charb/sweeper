@@ -10,7 +10,7 @@ std::vector<std::pair<std::string, std::string>> readFile() {
     std::ifstream scores("files/leaderboard.txt");
 
     while (std::getline(scores, line)) {
-        nameScores.push_back({line.substr(0, line.find(',')), line.substr(line.find(',')+2)});
+        nameScores.push_back({line.substr(0, line.find(',')), line.substr(line.find(',')+1)});
     }
     return nameScores;
 }
@@ -34,7 +34,7 @@ leaderBoard::leaderBoard(int rows, int cols) {
 bool leaderBoard::getClosed(){return closed;}
 
 long long timeToInt(std::string t) {
-    return t[0]*(600) + t[1]*(60) + t[3]*(10) + t[4];
+    return ((int) t[0])*(600) + ((int) t[1])*(60) + ((int) t[3])*(10) + ((int) t[4]);
 }
 
 void leaderBoard::addScore(std::string name, std::string t) {
@@ -51,7 +51,7 @@ void leaderBoard::addScore(std::string name, std::string t) {
     }
     if (spot < 5) {
         allScores[spot].first = t;
-        allScores[spot].second = name;
+        allScores[spot].second = name + "*";
     }
     writeFile(allScores);
 }
