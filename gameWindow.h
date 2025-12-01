@@ -7,10 +7,11 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include "tile.h"
+#include "leaderBoard.h"
 
 class gameWindow {
 public:
-    gameWindow(unsigned int w, unsigned int h, unsigned int m);
+    gameWindow(unsigned int w, unsigned int h, unsigned int m, std::string n);
     bool checkBounds(int col, int row);
     int checkAround(std::vector<std::vector<int>> grid, int col, int row);
     std::vector<std::vector<int>> boardLayout(int r, int c);
@@ -29,6 +30,7 @@ private:
     bool first_click;
     bool game_win;
     bool started;
+    std::string name;
 };
 
 

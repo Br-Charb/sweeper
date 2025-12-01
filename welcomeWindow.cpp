@@ -8,7 +8,6 @@
 
 
 welcomeWindow::welcomeWindow(unsigned int w, unsigned int h) {
-    std::cout<<"Welcome Window"<<std::endl;
     name = "";
     closed = false;
     welcome_w = w*32;

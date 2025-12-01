@@ -8,7 +8,7 @@
 
 
 //constructor
-gameWindow::gameWindow(unsigned int w, unsigned int h, unsigned int m) {
+gameWindow::gameWindow(unsigned int w, unsigned int h, unsigned int m, std::string n) {
     game_rows = h;
     game_cols = w;
     game_w = w*32;
@@ -19,6 +19,7 @@ gameWindow::gameWindow(unsigned int w, unsigned int h, unsigned int m) {
     paused = false;
     revealed_count = 0;
     game_win = false;
+    name = n;
 }
 
 //bounds checking function
@@ -112,6 +113,9 @@ void gameWindow::openGame() {
     //create window
     sf::RenderWindow window(sf::VideoMode({game_w, game_h}), "Minesweeper", sf::Style::Close);
 
+    //create leaderboard
+    leaderBoard leadBoard(game_rows, game_cols);
+
     //load all textures
         sf::Texture tile_hidden("files/images/tile_hidden.png", false, sf::IntRect({0, 0}, {32, 32}));
         sf::Texture tile_revealed("files/images/tile_revealed.png", false, sf::IntRect({0, 0}, {32, 32}));
@@ -156,8 +160,9 @@ void gameWindow::openGame() {
         game_over = false;
         int flag_count = 0;
         int pause_time = 0;
-        long long time;
+        long long time = 0;
         paused = false;
+        bool justWon = true;
 
         std::chrono::time_point<std::chrono::steady_clock> pausedTime;
 
@@ -242,6 +247,12 @@ void gameWindow::openGame() {
                             revealed_count = 0;
                         }
 
+                        if (leaderBoardSprite.getGlobalBounds().contains(sf::Vector2f(mousePos))){
+                            if (!paused && revealed_count > 0) pausedTime = std::chrono::high_resolution_clock::now();
+                            leadBoard.openWindow();
+                            if (!paused && revealed_count > 0) pause_time += std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - pausedTime).count();
+                        }
+
                         for (int r = 0; r < game_rows; r += 1) {
                             for (int c = 0; c < game_cols; c += 1) {
                                 if (tiles[r][c].getTile().getGlobalBounds().contains(sf::Vector2f(mousePos)) && revealed_count == 0 && !tiles[r][c].getFlagged()) {
@@ -259,7 +270,7 @@ void gameWindow::openGame() {
 
                     }
                 }
-                if (revealed_count > 0) {
+                if (revealed_count != (game_cols*game_rows-game_m) && revealed_count > 0) {
                     if (const auto* mousePressed = event->getIf<sf::Event::MouseButtonPressed>()) {
                         auto mousePos = sf::Mouse::getPosition(window);
                         if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
@@ -336,12 +347,30 @@ void gameWindow::openGame() {
             }
 
             window.clear(sf::Color::White);
+            if (revealed_count == (game_cols*game_rows-game_m) && justWon) {
+                game_over = true;
+                game_win = true;
+
+                c1.setTextureRect(sf::IntRect({0, 0}, {21, 32}));
+                c2.setTextureRect(sf::IntRect({0, 0}, {21, 32}));
+                c3.setTextureRect(sf::IntRect({0, 0}, {21, 32}));
+
+                for (int row = 0; row < game_rows; row += 1) {
+                    for (int col = 0; col < game_cols; col += 1) {
+                        if (tiles[row][col].getNumber() == -1) {
+                            tiles[row][col].unreveal();
+                            tiles[row][col].becomeFlag();
+                        }
+                    }
+                }
+                restartButton.setTexture(winFace);
+            }
+
             window.draw(restartButton);
             window.draw(debugButton);
             window.draw(pausePlay);
             window.draw(leaderBoardSprite);
 
-            // std::cout << flag_count << std::endl;
 
             if (revealed_count != 0 && !game_over) {
                 if (paused) {
@@ -371,30 +400,10 @@ void gameWindow::openGame() {
             for (int row = 0; row < game_rows; row += 1) {
                 for (int col = 0; col < game_cols; col += 1) {
                     window.draw(tiles[row][col].getTile());
-                    if (game_over && tiles[row][col].getNumber() == -1) {
+                    if (game_over && tiles[row][col].getNumber() == -1 && !game_win) {
                         tiles[row][col].reveal();
                     }
                     if (tiles[row][col].getFlagged() || tiles[row][col].getClicked()) {window.draw(tiles[row][col].getFlag());}
-                }
-            }
-
-            if (revealed_count == (game_cols*game_rows-game_m)) {
-                game_over = true;
-                game_win = true;
-
-                c1.setTextureRect(sf::IntRect({0, 0}, {21, 32}));
-                c2.setTextureRect(sf::IntRect({0, 0}, {21, 32}));
-                c3.setTextureRect(sf::IntRect({0, 0}, {21, 32}));
-
-                for (int row = 0; row < game_rows; row += 1) {
-                    for (int col = 0; col < game_cols; col += 1) {
-                        if (game_over && tiles[row][col].getNumber() == -1) {
-                            tiles[row][col].unreveal();
-                            window.draw(tiles[row][col].getTile());
-                        }
-                        if (!tiles[row][col].getClicked()) {window.draw(tiles[row][col].getFlag());}
-                        restartButton.setTexture(winFace);
-                    }
                 }
             }
 
@@ -403,6 +412,13 @@ void gameWindow::openGame() {
             window.draw(c3);
 
             window.display();
+
+            if (revealed_count == (game_cols*game_rows-game_m) && justWon) {
+                std::vector<int> timeString = getDigits(time);
+                leadBoard.addScore(name, std::to_string(timeString[0]) + std::to_string(timeString[1]) + ":" + std::to_string(timeString[2]) + std::to_string(timeString[3]));
+                leadBoard.openWindow();
+                justWon = false;
+            }
         }
     }
     window.close();
