@@ -9,7 +9,7 @@ int main() {
     std::ifstream file("files/config.cfg");
 
     unsigned int rows; unsigned int cols; unsigned int mines;
-    file >> rows >> cols >> mines;
+    file >> cols >> rows >> mines;
     welcomeWindow w(rows, cols);
     w.openWindow();
 

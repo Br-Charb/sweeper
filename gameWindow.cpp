@@ -8,7 +8,7 @@
 
 
 //constructor
-gameWindow::gameWindow(unsigned int w, unsigned int h, unsigned int m, std::string n) {
+gameWindow::gameWindow(unsigned int h, unsigned int w, unsigned int m, std::string n) {
     game_rows = h;
     game_cols = w;
     game_w = w*32;
@@ -303,7 +303,6 @@ void gameWindow::openGame() {
                                         if (tiles[row][col].getFlagged()) {flag_count += 1;}
                                         else{flag_count -= 1;}
                                         int minesLeft = std::abs(game_m-flag_count +0.0f);
-                                        std::cout << minesLeft << std::endl;
                                         c1.setTextureRect(sf::IntRect({(minesLeft/100)*21, 0}, {21, 32}));
                                         minesLeft -= (minesLeft/100)*100;
                                         c2.setTextureRect(sf::IntRect({(minesLeft/10)*21, 0}, {21, 32}));

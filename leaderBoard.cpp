@@ -34,7 +34,7 @@ leaderBoard::leaderBoard(int rows, int cols) {
 bool leaderBoard::getClosed(){return closed;}
 
 long long timeToInt(std::string t) {
-    return ((int) t[0])*(600) + ((int) t[1])*(60) + ((int) t[3])*(10) + ((int) t[4]);
+    return (t[0] - '0')*(600) + (t[1] - '0')*(60) + (t[3] - '0')*(10) + (t[4] - '0');
 }
 
 void leaderBoard::addScore(std::string name, std::string t) {
@@ -70,10 +70,8 @@ void leaderBoard::openWindow() {
 
     std::string scoreBoard = "";
     for (int i = 0; i < allScores.size(); i++) {
-        std::cout << allScores[i].first << std::endl;
         scoreBoard += std::to_string(i+1) + ".\t" + allScores[i].first + "\t" + allScores[i].second + "\n\n";
     }
-    std::cout << scoreBoard << std::endl;
 
     // welcome to minesweeper
     sf::Text welcome(font);

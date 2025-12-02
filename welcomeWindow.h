@@ -9,7 +9,7 @@
 
 class welcomeWindow {
 public:
-    welcomeWindow(unsigned int w, unsigned int h);
+    welcomeWindow(unsigned int h, unsigned int w);
     std::string getName();
     bool getClosed();
     void setText(sf::Text &text, float x, float y);

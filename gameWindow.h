@@ -12,7 +12,7 @@
 
 class gameWindow {
 public:
-    gameWindow(unsigned int w, unsigned int h, unsigned int m, std::string n);
+    gameWindow(unsigned int h, unsigned int w, unsigned int m, std::string n);
     bool checkBounds(int col, int row);
     int checkAround(std::vector<std::vector<int>> grid, int col, int row);
     std::vector<std::vector<int>> boardLayout(int r, int c);

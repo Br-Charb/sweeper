@@ -7,7 +7,7 @@
 #include <iostream>
 
 
-welcomeWindow::welcomeWindow(unsigned int w, unsigned int h) {
+welcomeWindow::welcomeWindow(unsigned int h, unsigned int w) {
     name = "";
     closed = false;
     welcome_w = w*32;
