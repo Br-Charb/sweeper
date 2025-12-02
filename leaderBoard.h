@@ -12,7 +12,9 @@
 
 class leaderBoard {
 public:
-    leaderBoard(int rows, int cols);
+    std::vector<std::pair<std::string, std::string>> readFile();
+    void writeFile(std::vector<std::pair<std::string, std::string>> nameScores);
+    leaderBoard(int rows, int cols, std::string fp);
     bool getClosed();
     void setText(sf::Text &text, float x, float y);
     void addScore(std::string name, std::string t);
@@ -23,6 +25,8 @@ private:
     unsigned int height;
     bool closed;
     std::vector<std::pair<std::string, std::string>> allScores;
+    int spot;
+    std::string filePath;
 };
 
 

@@ -4,31 +4,33 @@
 
 #include "leaderBoard.h"
 
-std::vector<std::pair<std::string, std::string>> readFile() {
+std::vector<std::pair<std::string, std::string>> leaderBoard::readFile() {
     std::vector<std::pair<std::string, std::string>> nameScores;
     std::string line;
-    std::ifstream scores("files/leaderboard.txt");
+    std::ifstream scores(filePath);
 
     while (std::getline(scores, line)) {
-        nameScores.push_back({line.substr(0, line.find(',')), line.substr(line.find(',')+1)});
+        nameScores.push_back({line.substr(0, line.find(',')), line.substr(line.find(',')+2)});
     }
     return nameScores;
 }
 
-void writeFile(std::vector<std::pair<std::string, std::string>> nameScores) {
-    std::ofstream scores("files/leaderboard.txt");
-    scores << nameScores[0].first << ", " << nameScores[0].second + "\n";
-    scores << nameScores[1].first << ", " << nameScores[1].second + "\n";
-    scores << nameScores[2].first << ", " << nameScores[2].second + "\n";
-    scores << nameScores[3].first << ", " << nameScores[3].second + "\n";
+void leaderBoard::writeFile(std::vector<std::pair<std::string, std::string>> nameScores) {
+    std::ofstream scores(filePath);
+    scores << nameScores[0].first << ", " << nameScores[0].second << "\n";
+    scores << nameScores[1].first << ", " << nameScores[1].second << "\n";
+    scores << nameScores[2].first << ", " << nameScores[2].second << "\n";
+    scores << nameScores[3].first << ", " << nameScores[3].second << "\n";
     scores << nameScores[4].first << ", " << nameScores[4].second;
 }
 
-leaderBoard::leaderBoard(int rows, int cols) {
+leaderBoard::leaderBoard(int rows, int cols, std::string fp) {
     height = rows*16 + 50;
     width = cols*16;
     closed = true;
+    filePath = fp;
     allScores = readFile();
+    spot = 0;
 }
 
 bool leaderBoard::getClosed(){return closed;}
@@ -38,7 +40,7 @@ long long timeToInt(std::string t) {
 }
 
 void leaderBoard::addScore(std::string name, std::string t) {
-    int spot = 0;
+    spot = 0;
     long long time = timeToInt(t);
     for (int i = 0; i < allScores.size(); i++) {
         if (timeToInt(allScores[i].first) < time) {
@@ -51,7 +53,7 @@ void leaderBoard::addScore(std::string name, std::string t) {
     }
     if (spot < 5) {
         allScores[spot].first = t;
-        allScores[spot].second = name + "*";
+        allScores[spot].second = name;
     }
     writeFile(allScores);
 }
@@ -70,7 +72,9 @@ void leaderBoard::openWindow() {
 
     std::string scoreBoard = "";
     for (int i = 0; i < allScores.size(); i++) {
-        scoreBoard += std::to_string(i+1) + ".\t" + allScores[i].first + "\t" + allScores[i].second + "\n\n";
+        std::string cur = "";
+        if (spot == i) cur = "*";
+        scoreBoard += std::to_string(i+1) + ".\t" + allScores[i].first + "\t" + allScores[i].second + cur + "\n\n";
     }
 
     // welcome to minesweeper

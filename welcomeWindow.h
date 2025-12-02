@@ -13,12 +13,14 @@ public:
     std::string getName();
     bool getClosed();
     void setText(sf::Text &text, float x, float y);
+    std::string getMode();
     void openWindow();
 private:
     std::string name;
     bool closed;
     unsigned int welcome_w;
     unsigned int welcome_h;
+    std::string mode;
 };
 
 

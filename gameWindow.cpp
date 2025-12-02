@@ -8,12 +8,13 @@
 
 
 //constructor
-gameWindow::gameWindow(unsigned int h, unsigned int w, unsigned int m, std::string n) {
+gameWindow::gameWindow(unsigned int h, unsigned int w, unsigned int m, std::string n, std::string ptl) {
     game_rows = h;
     game_cols = w;
     game_w = w*32;
     game_h = h*32 + 100;
     game_m = m;
+    pathToLeaderboard = ptl;
     game_over = false;
     gameGoing = true;
     paused = false;
@@ -114,7 +115,7 @@ void gameWindow::openGame() {
     sf::RenderWindow window(sf::VideoMode({game_w, game_h}), "Minesweeper", sf::Style::Close);
 
     //create leaderboard
-    leaderBoard leadBoard(game_rows, game_cols);
+    leaderBoard leadBoard(game_rows, game_cols, pathToLeaderboard);
 
     //load all textures
         sf::Texture tile_hidden("files/images/tile_hidden.png", false, sf::IntRect({0, 0}, {32, 32}));
