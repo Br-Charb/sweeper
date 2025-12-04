@@ -24,10 +24,11 @@ void leaderBoard::writeFile(std::vector<std::pair<std::string, std::string>> nam
     scores << nameScores[4].first << ", " << nameScores[4].second;
 }
 
-leaderBoard::leaderBoard(int rows, int cols, std::string fp) {
+leaderBoard::leaderBoard(int rows, int cols, std::string fp, bool jw) {
     height = rows*16 + 50;
     width = cols*16;
     closed = true;
+    justWon = jw;
     filePath = fp;
     allScores = readFile();
     spot = 0;
@@ -65,6 +66,10 @@ void leaderBoard::setText(sf::Text &text, float x, float y){
     text.setPosition(sf::Vector2f(x, y));
 }
 
+void leaderBoard::setJustWon(bool jw) {
+    justWon = jw;
+}
+
 void leaderBoard::openWindow() {
     closed = false;
     sf::RenderWindow window(sf::VideoMode({width, height}), "Minesweeper", sf::Style::Close);
@@ -73,7 +78,7 @@ void leaderBoard::openWindow() {
     std::string scoreBoard = "";
     for (int i = 0; i < allScores.size(); i++) {
         std::string cur = "";
-        if (spot == i) cur = "*";
+        if (spot == i and justWon) cur = "*";
         scoreBoard += std::to_string(i+1) + ".\t" + allScores[i].first + "\t" + allScores[i].second + cur + "\n\n";
     }
 

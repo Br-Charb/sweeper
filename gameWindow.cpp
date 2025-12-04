@@ -115,7 +115,7 @@ void gameWindow::openGame() {
     sf::RenderWindow window(sf::VideoMode({game_w, game_h}), "Minesweeper", sf::Style::Close);
 
     //create leaderboard
-    leaderBoard leadBoard(game_rows, game_cols, pathToLeaderboard);
+    leaderBoard leadBoard(game_rows, game_cols, pathToLeaderboard, false);
 
     //load all textures
         sf::Texture tile_hidden("files/images/tile_hidden.png", false, sf::IntRect({0, 0}, {32, 32}));
@@ -159,6 +159,7 @@ void gameWindow::openGame() {
 
         //initalizes variables
         game_over = false;
+        leadBoard.setJustWon(false);
         int flag_count = 0;
         int pause_time = 0;
         long long time = 0;
@@ -254,6 +255,16 @@ void gameWindow::openGame() {
 
                         if (leaderBoardSprite.getGlobalBounds().contains(sf::Vector2f(mousePos))){
                             if (!paused && revealed_count > 0) pausedTime = std::chrono::high_resolution_clock::now();
+
+                            for (int row = 0; row < game_rows; row++) {
+                                for (int col = 0; col < game_cols; col++) {
+                                    sf::Sprite tempTile(*textures["0"]);
+                                    tempTile.setPosition({col*32.0f, row*32.0f});
+                                    window.draw(tempTile);
+                                }
+                            }
+                            window.display();
+
                             leadBoard.openWindow();
                             if (!paused && revealed_count > 0) pause_time += std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - pausedTime).count();
                         }
@@ -386,6 +397,7 @@ void gameWindow::openGame() {
             if (revealed_count == (game_cols*game_rows-game_m) && justWon) {
                 game_over = true;
                 game_win = true;
+                leadBoard.setJustWon(true);
 
                 c1.setTextureRect(sf::IntRect({0, 0}, {21, 32}));
                 c2.setTextureRect(sf::IntRect({0, 0}, {21, 32}));
